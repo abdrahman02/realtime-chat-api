@@ -3,13 +3,16 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoute from "./routes/userRoute.js";
+import chatRoute from "./routes/chatRoute.js";
 
 const app = express();
 dotenv.config();
 
 app.use(express.json());
 app.use(cors());
+
 app.use("/api/users", userRoute);
+app.use("/api/chats", chatRoute);
 
 app.get("/", (req, res) => {
   res.send("Welcome our realtime-chat apis..");
