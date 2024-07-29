@@ -68,11 +68,16 @@ export const loginUser = async (req, res) => {
         .status(400)
         .json({ msg: "Invalid email or password", success: false });
 
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    }
     const token = createToken(user._id);
 
     return res
       .status(200)
-      .json({ msg: "Login successfully", success: true, data: user, token });
+      .json({ msg: "Login successfully", success: true, data: userData, token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: error.message, success: false });
