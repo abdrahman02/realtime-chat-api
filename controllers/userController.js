@@ -40,11 +40,9 @@ export const registerUser = async (req, res) => {
 
     await user.save();
 
-    const token = createToken(user._id);
-
     return res
       .status(200)
-      .json({ msg: "User created", success: true, data: user, token });
+      .json({ msg: "User created", success: true, data: user });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: error.message, success: false });
@@ -54,7 +52,7 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
-    let user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email });
 
     if (!user)
       return res
@@ -70,9 +68,15 @@ export const loginUser = async (req, res) => {
 
     const token = createToken(user._id);
 
+    const data = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    };
+
     return res
       .status(200)
-      .json({ msg: "Login successfully", success: true, data: user, token });
+      .json({ msg: "Login successfully", success: true, data, token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: error.message, success: false });
@@ -109,6 +113,31 @@ export const getUsers = async (req, res) => {
       .json({ msg: "Get user successfully", success: true, datas: users });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ msg: error.message, success: false });
+  }
+};
+
+export const searchUsers = async (req, res) => {
+  const query = req.query.search;
+  try {
+    const users = await userModel
+      .find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { email: { $regex: query, $options: "i" } },
+        ],
+      })
+      .select("name email");
+
+    if (users.length === 0) {
+      return res.status(404).json({ msg: "No users found", success: false });
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "Get users successfully", success: true, datas: users });
+  } catch (error) {
+    console.log({ error });
     return res.status(500).json({ msg: error.message, success: false });
   }
 };
