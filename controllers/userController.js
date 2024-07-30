@@ -11,27 +11,26 @@ const createToken = (_id) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, confPassword } = req.body;
+
+    let errors = [];
 
     let user = await userModel.findOne({ email });
 
-    if (user)
-      return res
-        .status(400)
-        .json({ msg: "The email already exist", success: false });
-    if (!name || !email || !password)
-      return res
-        .status(400)
-        .json({ msg: "All field are required", success: false });
+    if (!name || !email || !password || !confPassword)
+      errors.push("All field are required");
 
-    if (!validator.isEmail(email))
-      return res
-        .status(400)
-        .json({ msg: "email must be a valid email", success: false });
+    if (!validator.isEmail(email)) errors.push("email must be a valid email");
+
+    if (user) errors.push("The email already exist");
+
+    if (password !== confPassword) errors.push("Password is do not match");
+
     if (!validator.isStrongPassword(password))
-      return res
-        .status(400)
-        .json({ msg: "Password must be a strong password", success: false });
+      errors.push("Password must be a strong password");
+
+    if (errors.length > 0)
+      return res.status(400).json({ errors, success: false });
 
     user = new userModel({ name, email, password });
 
@@ -40,9 +39,11 @@ export const registerUser = async (req, res) => {
 
     await user.save();
 
-    return res
-      .status(200)
-      .json({ msg: "User created", success: true, data: user });
+    return res.status(200).json({
+      msg: "User created, you can login now",
+      success: true,
+      data: user,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: error.message, success: false });
@@ -66,6 +67,11 @@ export const loginUser = async (req, res) => {
         .status(400)
         .json({ msg: "Invalid email or password", success: false });
 
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    };
     const token = createToken(user._id);
 
     const data = {
